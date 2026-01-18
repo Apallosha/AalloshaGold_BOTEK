@@ -6,6 +6,7 @@ from config import *
 from db import cursor, conn
 
 bot = telebot.TeleBot(TOKEN)
+bot.remove_webhook()
 
 # ================== КНОПКИ ==================
 
