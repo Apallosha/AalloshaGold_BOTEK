@@ -49,7 +49,7 @@ def start(msg):
 
 # ================== БАЛАНС ==================
 
-@bot.message_handler(func=lambda m: m.text == "💰 Баланс")
+@bot.message_handler(func=lambda m: "Баланс" in m.text)
 def balance(msg):
     bal = cursor.execute(
         "SELECT balance FROM users WHERE user_id=?",
@@ -60,7 +60,7 @@ def balance(msg):
 
 # ================== ВЫВОД ==================
 
-@bot.message_handler(func=lambda m: m.text == "💸 Вывод")
+@bot.message_handler(func=lambda m: "Вывод" in m.text)
 def withdraw(msg):
     bal = cursor.execute(
         "SELECT balance FROM users WHERE user_id=?",
@@ -143,73 +143,9 @@ def save_withdraw(msg, amount, full):
     bot.send_message(msg.chat.id, "⏳ Заявка отправлена администратору")
 
 
-# ================== ПРИНЯТЬ ==================
-
-@bot.callback_query_handler(func=lambda c: c.data.startswith("wd_accept_"))
-def accept_withdraw(call):
-    wid = int(call.data.split("_")[-1])
-
-    w = cursor.execute(
-        "SELECT user_id FROM withdraws WHERE id=? AND status='pending'",
-        (wid,)
-    ).fetchone()
-
-    if not w:
-        bot.answer_callback_query(call.id, "❌ Уже обработано")
-        return
-
-    cursor.execute(
-        "UPDATE withdraws SET status='accepted' WHERE id=?",
-        (wid,)
-    )
-    conn.commit()
-
-    bot.send_message(w[0], "✅ Ваш вывод принят. Ожидайте.")
-    bot.edit_message_caption(
-        call.message.caption + "\n\n✅ ПРИНЯТО",
-        call.message.chat.id,
-        call.message.message_id
-    )
-
-
-# ================== ОТКЛОНИТЬ ==================
-
-@bot.callback_query_handler(func=lambda c: c.data.startswith("wd_decline_"))
-def decline_withdraw(call):
-    wid = int(call.data.split("_")[-1])
-
-    w = cursor.execute(
-        "SELECT user_id, amount FROM withdraws WHERE id=? AND status='pending'",
-        (wid,)
-    ).fetchone()
-
-    if not w:
-        bot.answer_callback_query(call.id, "❌ Уже обработано")
-        return
-
-    user_id, amount = w
-
-    cursor.execute(
-        "UPDATE withdraws SET status='declined' WHERE id=?",
-        (wid,)
-    )
-    cursor.execute(
-        "UPDATE users SET balance = balance + ? WHERE user_id=?",
-        (amount, user_id)
-    )
-    conn.commit()
-
-    bot.send_message(user_id, "❌ Вывод отклонён. Средства возвращены.")
-    bot.edit_message_caption(
-        call.message.caption + "\n\n❌ ОТКЛОНЕНО",
-        call.message.chat.id,
-        call.message.message_id
-    )
-
-
 # ================== АДМИНКА ==================
 
-@bot.message_handler(func=lambda m: m.text == "🛠 Админка")
+@bot.message_handler(func=lambda m: "Админка" in m.text)
 def admin(msg):
     if msg.from_user.id != ADMIN_ID:
         return
