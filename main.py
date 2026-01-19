@@ -33,12 +33,15 @@ def is_subscribed(user_id):
             return False
     return True
 
-def main_menu():
+def main_menu(user_id):
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.add("💰 Баланс", "🔗 Пригласить")
     kb.add("💸 Вывод", "📜 Правила")
     kb.add("📋 Задания", "🏆 Топ")
-    kb.add("🛠 Админка")
+
+    if int(user_id) == ADMIN_ID:
+        kb.add("🛠 Админка")
+
     return kb
 
 def admin_menu():
@@ -237,7 +240,6 @@ def ban_user(msg):
     save(data)
     bot.send_message(msg.chat.id, "Пользователь забанен")
 
-bot.polling()
 @bot.callback_query_handler(func=lambda call: True)
 def callbacks(call):
     data = load()
@@ -267,4 +269,4 @@ def callbacks(call):
             for w in data["withdraws"]:
                 bot.send_message(call.message.chat.id, f"{w['user']} | {w['amount']}G")
 
-
+bot.poligion()
