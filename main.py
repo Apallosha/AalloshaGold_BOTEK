@@ -136,8 +136,33 @@ def handler(msg):
         bot.send_message(msg.chat.id, text)
 
     elif msg.text == "🛠 Админка" and int(uid) == ADMIN_ID:
-        bot.send_message(msg.chat.id, "🛠 Панель администратора:", reply_markup=admin_menu())
-        bot.send_message(msg.chat.id, "Основное меню:", reply_markup=main_menu())
+    ikb = types.InlineKeyboardMarkup(row_width=2)
+
+    ikb.add(
+        types.InlineKeyboardButton("➕ Задание", callback_data="add_task"),
+        types.InlineKeyboardButton("➖ Задание", callback_data="del_task")
+    )
+    ikb.add(
+        types.InlineKeyboardButton("🚫 Бан", callback_data="ban"),
+        types.InlineKeyboardButton("📊 Накрутка", callback_data="check_refs")
+    )
+    ikb.add(
+        types.InlineKeyboardButton("💸 Запросы на вывод", callback_data="withdraws")
+    )
+
+    bot.send_message(
+        msg.chat.id,
+        "🛠 Панель администратора:",
+        reply_markup=ikb
+    )
+
+    # Главное меню остаётся
+    bot.send_message(
+        msg.chat.id,
+        "Основное меню:",
+        reply_markup=main_menu()
+    )
+
 
     elif msg.text == "+ ЗАДАНИЕ" and int(uid) == ADMIN_ID:
         bot.send_message(msg.chat.id, "Отправь: id, @канал, награда")
@@ -213,4 +238,33 @@ def ban_user(msg):
     bot.send_message(msg.chat.id, "Пользователь забанен")
 
 bot.polling()
+@bot.callback_query_handler(func=lambda call: True)
+def callbacks(call):
+    data = load()
+    uid = str(call.from_user.id)
+
+    if int(uid) != ADMIN_ID:
+        return
+
+    if call.data == "add_task":
+        bot.send_message(call.message.chat.id, "Отправь: id @канал награда")
+
+    elif call.data == "del_task":
+        bot.send_message(call.message.chat.id, "Отправь ID задания")
+
+    elif call.data == "ban":
+        bot.send_message(call.message.chat.id, "Отправь ID пользователя")
+
+    elif call.data == "check_refs":
+        for u, info in data["users"].items():
+            if len(info["refs"]) >= 7:
+                bot.send_message(call.message.chat.id, f"ID {u} — {len(info['refs'])} рефов")
+
+    elif call.data == "withdraws":
+        if not data["withdraws"]:
+            bot.send_message(call.message.chat.id, "Нет запросов на вывод")
+        else:
+            for w in data["withdraws"]:
+                bot.send_message(call.message.chat.id, f"{w['user']} | {w['amount']}G")
+
 
